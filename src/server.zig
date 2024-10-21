@@ -3,6 +3,7 @@ const zap = @import("zap");
 const controller = @import("controller.zig").controller;
 const init_error = @import("controller.zig").controller_init_error;
 const song = @import("song.zig").song;
+const log = @import("log.zig");
 
 var CONTROLLER: controller = undefined;
 

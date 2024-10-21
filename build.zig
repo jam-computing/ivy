@@ -18,6 +18,7 @@ pub fn build(b: *std.Build) void {
     });
 
     holly.linkSystemLibrary("ws2811");
+    // holly.linkSystemLibrary("mariadb");
 
     holly.root_module.addImport("zap", zap.module("zap"));
 
