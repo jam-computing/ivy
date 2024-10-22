@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const holly = b.addExecutable(.{
-        .name = "holly",
+        .name = "ivy",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
@@ -18,8 +18,6 @@ pub fn build(b: *std.Build) void {
     });
 
     holly.linkSystemLibrary("ws2811");
-    // holly.linkSystemLibrary("mariadb");
-
     holly.root_module.addImport("zap", zap.module("zap"));
 
     b.installArtifact(holly);

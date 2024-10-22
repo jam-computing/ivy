@@ -4,6 +4,23 @@ pub const rgb = struct {
     red: u8,
     green: u8,
     blue: u8,
+
+    pub fn atoc(str: []const u8) !rgb {
+        const red_str = str[0..1];
+        const col = try std.fmt.parseInt(u32, str, 16);
+
+        std.debug.print("col: {}", .{col});
+
+        return rgb{
+            .red = 0,
+            .green = 0,
+            .blue = 0,
+        };
+    }
+
+    pub fn new() rgb {
+        return rgb{ .red = 0, .green = 0, .blue = 0 };
+    }
 };
 
 pub const song = struct {
