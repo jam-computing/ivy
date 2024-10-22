@@ -26,8 +26,6 @@ Each set of 4 bytes map to a rgba value.
 - Receieve new songs
 - Display one beat
 
-
-
 #### Song Json Example
 ```json
 {
