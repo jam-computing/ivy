@@ -46,6 +46,6 @@ Each set of 4 bytes map to a rgba value.
     "name": "string",
     "points": {
         [ "x": "int", "y": "int", "z": "int" ]
-    },
+    }
 }
 ```
