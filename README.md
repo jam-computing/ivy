@@ -18,6 +18,8 @@ Each set of 4 bytes map to a rgba value.
 - Send beat -           POST api/beat/play
 - Send tree -           POST api/tree/create
 - Send song -           POST api/song/create
+- Receive Config File   GET api/config
+- Send Config File      POST api/config
 
 ### Ivy
 - Store songs and tree
@@ -25,6 +27,7 @@ Each set of 4 bytes map to a rgba value.
 - Play selected song on lights
 - Receieve new songs
 - Display one beat
+- Configuration file
 
 #### Song Json Example
 ```json

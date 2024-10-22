@@ -4,14 +4,8 @@ const log = @import("log.zig");
 const rgb = @import("song.zig").rgb;
 
 pub fn main() !void {
-    const str = "ff";
-    const col = try rgb.atoc(str);
-
-    std.debug.print("red: {}", .{col.red});
-    std.debug.print("green: {}", .{col.green});
-    std.debug.print("blue: {}", .{col.blue});
-
+    try log.setup_log();
     const s = server{ .port = 3000 };
-    log.debug("Running Server", @src());
+    log.debug("Running Server on port: {}", .{@src(), s.port});
     try s.run();
 }

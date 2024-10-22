@@ -20,7 +20,7 @@ pub const server = struct {
             .log = true,
         });
 
-        CONTROLLER = try controller.init();
+        // CONTROLLER = try controller.init();
 
         _ = try song.init(&allocator, 5, 5);
 
