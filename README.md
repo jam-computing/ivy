@@ -29,12 +29,12 @@ Each set of 4 bytes map to a rgba value.
 #### Song Json Example
 ```json
 {
-    "id": int,
-    "name": string,
-    "author": string,
-    "beat_count": int,
+    "id": "int",
+    "name": "string",
+    "author": "string",
+    "beat_count": "int",
     "beats": {
-        [ "red": int, "green": int, "blue": int, "alpha": int ]
+        [ "red": "int", "green": "int", "blue": "int", "alpha": "int" ]
     }
 }
 ```
@@ -42,10 +42,10 @@ Each set of 4 bytes map to a rgba value.
 #### Tree Json Example
 ```json
 {
-    "id": int,
-    "name": string,
+    "id": "int",
+    "name": "string",
     "points": {
-        [ "x": int, "y": int, "z": int ]
+        [ "x": "int", "y": "int", "z": "int" ]
     },
 }
 ```
