@@ -1,6 +1,12 @@
 # IVY
 Zig backend for tree
 
+## Running
+
+```sh
+zig build -Doptimize=ReleaseFast
+```
+
 ## Storing songs
 
 Each song is a list of "beats".

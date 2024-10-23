@@ -3,8 +3,7 @@ const zap = @import("zap");
 const controller = @import("controller.zig").controller;
 const init_error = @import("controller.zig").controller_init_error;
 const song = @import("song.zig").song;
-const log = @import("log.zig").log;
-const lvl = @import("log.zig").log_level;
+const log = @import("stardust").sdlog;
 
 var CONTROLLER: controller = undefined;
 
@@ -24,11 +23,11 @@ pub const server = struct {
 
         _ = try song.init(&allocator, 5, 5);
 
-        log(@src(), .{ "Listening...", lvl.info });
+        log(@src(), .{ "Listening for incoming connections...", .info });
 
         try listener.listen();
 
-        log(@src(), .{ "Started server...", lvl.debug });
+        log(@src(), .{ "Started server...", .debug });
 
         zap.start(.{
             .threads = 2,
@@ -38,7 +37,7 @@ pub const server = struct {
 
     fn on_request(r: zap.Request) void {
         if (r.path) |path| {
-            if(!std.mem.eql(u8, path, "/api")) {
+            if (!std.mem.eql(u8, path, "/api")) {
                 return;
             }
         }
@@ -48,7 +47,7 @@ pub const server = struct {
         }
 
         r.sendBody("response") catch {
-            log(@src(), .{ .fatal, "Could not respond to request"});
+            log(@src(), .{ "Could not respond to request", .fatal });
         };
     }
 };

@@ -17,8 +17,14 @@ pub fn build(b: *std.Build) void {
         .openssl = false,
     });
 
+    const sd = b.dependency("stardust", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     holly.linkSystemLibrary("ws2811");
     holly.root_module.addImport("zap", zap.module("zap"));
+    holly.root_module.addImport("stardust", sd.module("stardust"));
 
     b.installArtifact(holly);
     const run_cmd = b.addRunArtifact(holly);

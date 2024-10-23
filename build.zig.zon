@@ -9,6 +9,10 @@
             .url = "git+https://github.com/zigzap/zap?ref=v0.9.1#ae5c9278335d8e1133cd6d22707323dda712e120",
             .hash = "12200223d76ab6cd32f75bc2e31463b0b429bb5b2b6fa4ce8f68dea494ca1ec3398b",
         },
+        .stardust = .{
+            .url = "git+https://github.com/juleswhi/stardust.git?ref=main#a5bbb45b159ecd7c338d9c8d15aceb502e6c8dcf",
+            .hash = "12204267ccbf62c82cde48ed399d1e2e85a4892148489e83a6eb23ba18181dbcf350",
+        },
     },
 
     .paths = .{

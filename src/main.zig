@@ -1,11 +1,11 @@
 const std = @import("std");
 const server = @import("server.zig").server;
-const log = @import("log.zig");
+const sd = @import("stardust");
 const rgb = @import("song.zig").rgb;
 
 pub fn main() !void {
-    try log.setup_log(log.log_level.info);
+    try sd.sd_init_log(sd.sd_log_level.info, null);
     const s = server{ .port = 3000 };
-    log.log(@src(), .{ "Running on port", s.port, .info });
+    sd.sdlog(@src(), .{ "Running on port", s.port, .info });
     try s.run();
 }
