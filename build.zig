@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const holly = b.addExecutable(.{
+    const ivy = b.addExecutable(.{
         .name = "ivy",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
@@ -22,12 +22,13 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    holly.linkSystemLibrary("ws2811");
-    holly.root_module.addImport("zap", zap.module("zap"));
-    holly.root_module.addImport("stardust", sd.module("stardust"));
+    ivy.linkSystemLibrary("mariadb");
+    ivy.linkSystemLibrary("ws2811");
+    ivy.root_module.addImport("zap", zap.module("zap"));
+    ivy.root_module.addImport("stardust", sd.module("stardust"));
 
-    b.installArtifact(holly);
-    const run_cmd = b.addRunArtifact(holly);
+    b.installArtifact(ivy);
+    const run_cmd = b.addRunArtifact(ivy);
     run_cmd.step.dependOn(b.getInstallStep());
 
     if (b.args) |args| {

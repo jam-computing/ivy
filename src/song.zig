@@ -30,28 +30,41 @@ pub const rgb = struct {
 };
 
 pub const song = struct {
-    alloc: *const std.mem.Allocator,
-    frames: [][]rgb,
+    alloc: ?*const std.mem.Allocator,
 
-    pub fn init(a: *const std.mem.Allocator, song_len: usize, frame_len: usize) !song {
-        var s = song{
-            .alloc = a,
-            .frames = &[_][]rgb{},
+    id: i32,
+    name: []const u8,
+    author: []const u8,
+    beat_count: i32,
+    beats: [][]rgb,
+
+    pub fn new() song {
+        return song{
+            .alloc = null,
+            .id = -1,
+            .name = "",
+            .author = "",
+            .beat_count = 0,
+            .beats = &[_][]rgb{},
         };
+    }
 
-        s.frames = try a.alloc([]rgb, song_len);
+    pub fn init(a: *const std.mem.Allocator, count: usize, beat_length: usize) !song {
+        var s = song.new();
+        s.alloc = a;
+        s.beats = try a.alloc([]rgb, count);
 
-        for (s.frames) |*frame| {
-            frame.* = try a.alloc(rgb, frame_len);
+        for (s.beats) |*beat| {
+            beat.* = try a.alloc(rgb, beat_length);
         }
 
         return s;
     }
 
     pub fn deinit(self: *song) void {
-        for (self.frames) |frame| {
-            self.alloc.free(frame);
+        for (self.beats) |beat| {
+            self.alloc.?.free(beat);
         }
-        self.alloc.free(self.frames);
+        self.alloc.?.free(self.beats);
     }
 };
