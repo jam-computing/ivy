@@ -34,7 +34,7 @@ pub const song = struct {
     name: []const u8,
     author: []const u8,
     beat_count: i32,
-    beats: [][]rgb,
+    beats: [][][]const u8,
 
     pub fn new() song {
         return song{
