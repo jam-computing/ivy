@@ -2,6 +2,7 @@ const std = @import("std");
 const log = @import("stardust").sdlog;
 
 const song = @import("song.zig").song;
+const rgb = @import("song.zig").rgb;
 const tree = @import("tree.zig").tree;
 
 const c = @cImport({
@@ -43,6 +44,37 @@ pub const database = struct {
 
     pub fn close() void {
         c.mysql_close(conn.?);
+    }
+
+    pub fn get_all_songs() !?[]song {
+        if (conn == null) {
+            log(@src(), .{ "Attempting to query on a null connection", .err });
+            return null;
+        }
+        _ = c.mysql_query(conn.?, "select * from song");
+        const res: *c.MYSQL_RES = c.mysql_store_result(conn.?);
+
+        var list = std.ArrayList(song).init(allocator.?);
+
+        var row: c.MYSQL_ROW = c.mysql_fetch_row(res);
+
+        while (row != null) {
+            const beats = std.json.parseFromSlice([][]rgb, allocator.?, std.mem.span(row[4]), .{}) catch {
+                log(@src(), .{ "Could not parse beats from json", .err });
+                return null;
+            };
+            const s = song{
+                .id = std.fmt.parseInt(i32, std.mem.span(row[0]), 10) catch -1,
+                .name = std.mem.span(row[1]),
+                .author = std.mem.span(row[2]),
+                .beat_count = std.fmt.parseInt(i32, std.mem.span(row[3]), 10) catch -1,
+                .beats = beats.value,
+            };
+
+            try list.append(s);
+            row = c.mysql_fetch_row(res);
+        }
+        return try list.toOwnedSlice();
     }
 
     pub fn get_all_trees() !?[]tree {

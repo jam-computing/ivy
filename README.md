@@ -47,9 +47,9 @@ Each set of 4 bytes map to a rgba value.
     "name": "string",
     "author": "string",
     "beat_count": "int",
-    "beats": {
-        [ "red": "int", "green": "int", "blue": "int", "alpha": "int" ]
-    }
+    "beats": [
+        [ "rgba": "string" ]
+    ]
 }
 ```
 

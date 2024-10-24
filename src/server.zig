@@ -25,8 +25,6 @@ pub const server = struct {
 
         // CONTROLLER = try controller.init();
 
-        // _ = try song.init(&alloc.?, 5, 5);
-
         log(@src(), .{ "Listening for incoming connections...", .info });
 
         try listener.listen();
@@ -71,7 +69,11 @@ pub const server = struct {
             if (std.mem.eql(u8, endpoints.items[0], "tree")) {
                 handle_tree_request(&r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error" });
             } else if (std.mem.eql(u8, endpoints.items[0], "song")) {
-                handle_song_request(r, .{ .task = endpoints.items[1], .id = endpoints.items[2] });
+                if (endpoints.items.len > 2) {
+                    handle_song_request(r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error", .id = alloc.?.dupe(u8, endpoints.items[2]) catch "-1"});
+                } else {
+                    handle_song_request(r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error", .id = null });
+                }
             } else if (std.mem.eql(u8, endpoints.items[0], "beat")) {
                 handle_beat_request(r, &endpoints);
             } else if (std.mem.eql(u8, endpoints.items[0], "config")) {
@@ -86,13 +88,13 @@ pub const server = struct {
 
     fn handle_tree_request(r: *const zap.Request, args: struct { task: []const u8 }) void {
         // create, get
-
         if (std.mem.eql(u8, args.task, "create")) {
             if (r.body) |body| {
                 log(@src(), .{ body, .info });
-                const parsed = std.json.parseFromSlice(tree, alloc.?, body, .{}) catch {
+                const parsed = std.json.parseFromSlice(tree, alloc.?, body, .{}) catch |e| {
                     log(@src(), .{ "Could not create json. Please check valid json passed", .err });
                     log(@src(), .{ body, .info });
+                    r.sendError(e, null, 505);
                     return;
                 };
 
@@ -119,11 +121,35 @@ pub const server = struct {
             log(@src(), .{ "Invalid Task:", args.task, .err });
         }
     }
-    fn handle_song_request(r: zap.Request, _: anytype) void {
+    fn handle_song_request(r: zap.Request, args: struct { task: []const u8, id: ?[]const u8 }) void {
         // get, play
-        r.sendBody("Song endpoint") catch {
-            log(@src(), .{ "Could not respond to request", .fatal });
-        };
+        if (std.mem.eql(u8, args.task, "get")) {
+            if (args.id) |_| {
+                return;
+            }
+
+            log(@src(), .{ "Getting all songs", .info });
+
+            const songs = db.get_all_songs() catch {
+                return;
+            };
+
+            if (songs == null) {
+                return;
+            }
+
+            var string = std.ArrayList(u8).init(alloc.?);
+
+            std.json.stringify(songs.?, .{}, string.writer()) catch |e| {
+                log(@src(), .{ "Could not properly stringify data", .err });
+                r.sendError(e, null, 505);
+                return;
+            };
+            r.sendBody(string.items) catch {
+                log(@src(), .{ "Could not respond to request", .err });
+                return;
+            };
+        }
     }
     fn handle_beat_request(r: zap.Request, _: *const std.ArrayList([]const u8)) void {
         // play

@@ -30,8 +30,6 @@ pub const rgb = struct {
 };
 
 pub const song = struct {
-    alloc: ?*const std.mem.Allocator,
-
     id: i32,
     name: []const u8,
     author: []const u8,
@@ -40,7 +38,6 @@ pub const song = struct {
 
     pub fn new() song {
         return song{
-            .alloc = null,
             .id = -1,
             .name = "",
             .author = "",
@@ -51,7 +48,6 @@ pub const song = struct {
 
     pub fn init(a: *const std.mem.Allocator, count: usize, beat_length: usize) !song {
         var s = song.new();
-        s.alloc = a;
         s.beats = try a.alloc([]rgb, count);
 
         for (s.beats) |*beat| {
@@ -61,10 +57,10 @@ pub const song = struct {
         return s;
     }
 
-    pub fn deinit(self: *song) void {
+    pub fn deinit(a: *const std.mem.Allocator, self: *song) void {
         for (self.beats) |beat| {
-            self.alloc.?.free(beat);
+            a.free(beat);
         }
-        self.alloc.?.free(self.beats);
+        a.free(self.beats);
     }
 };
