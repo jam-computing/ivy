@@ -33,7 +33,7 @@ pub const server = struct {
 
         log(@src(), .{ "Started server...", .debug });
 
-        db.init();
+        db.init(alloc.?);
 
         log(@src(), .{ "Initiated database", .info });
 
@@ -81,31 +81,42 @@ pub const server = struct {
 
         if (r.query) |query| {
             log(@src(), .{ "query:", query, .info });
-        } else {
-            log(@src(), .{ "no body", .debug });
         }
     }
 
     fn handle_tree_request(r: *const zap.Request, args: struct { task: []const u8 }) void {
-        // create
-        r.sendBody("Tree endpoint") catch {
-            log(@src(), .{ "Could not respond to request", .err });
-        };
+        // create, get
 
-        if (!std.mem.eql(u8, args.task, "create")) {
-            log(@src(), .{ "Invalid Task:", args.task, .err });
-            return;
-        }
-
-        if (r.body) |body| {
-            log(@src(), .{ body, .info });
-            const parsed = std.json.parseFromSlice(tree, alloc, body) catch {
-                log(@src(), .{ "Could not create json. Please check valid json passed", .err });
+        if (std.mem.eql(u8, args.task, "create")) {
+            if (r.body) |body| {
                 log(@src(), .{ body, .info });
+                const parsed = std.json.parseFromSlice(tree, alloc.?, body, .{}) catch {
+                    log(@src(), .{ "Could not create json. Please check valid json passed", .err });
+                    log(@src(), .{ body, .info });
+                    return;
+                };
+
+                log(@src(), .{ "Parsed data name:", parsed.value.name, .debug });
+                r.sendBody("Create tree endpoint") catch {
+                    log(@src(), .{ "Could not respond to request", .err });
+                };
+            }
+        } else if (std.mem.eql(u8, args.task, "get")) {
+            const trees = db.get_all_trees() catch {
                 return;
             };
-
-            log(@src(), .{ "Parsed data:", parsed.value, .debug });
+            if (trees) |t| blk: {
+                var string = std.ArrayList(u8).init(alloc.?);
+                std.json.stringify(t, .{}, string.writer()) catch {
+                    log(@src(), .{ "Could not properly stringify data", .err });
+                    break :blk;
+                };
+                r.sendBody(string.items) catch {
+                    log(@src(), .{ "Could not respond to request", .err });
+                };
+            }
+        } else {
+            log(@src(), .{ "Invalid Task:", args.task, .err });
         }
     }
     fn handle_song_request(r: zap.Request, _: anytype) void {

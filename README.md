@@ -1,5 +1,10 @@
+<div align="center">
+
 # IVY
+
 Zig backend for tree
+
+</div>
 
 ## Running
 
@@ -53,8 +58,17 @@ Each set of 4 bytes map to a rgba value.
 {
     "id": "int",
     "name": "string",
-    "points": {
-        [ "x": "int", "y": "int", "z": "int" ]
-    }
+    "points":
+        [ { "x": "int", "y": "int", "z": "int" } ]
+
 }
+```
+
+### Create Database
+
+```sql
+create user 'beech'@'localhost' identified by 'password';
+grant all privileges on *.* to 'beech'@'localhost' with grant option;
+flush privileges;
+create database beech;
 ```
