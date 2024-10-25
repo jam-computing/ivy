@@ -116,6 +116,46 @@ pub const database = struct {
         return try list.toOwnedSlice();
     }
 
+    const song_meta = struct { id: []const u8, name: []const u8, author: []const u8 };
+
+    pub fn get_all_songs_names() !?[]song_meta {
+        if (conn == null) {
+            log(@src(), .{ "Attempting to query on a null connection", .err });
+            return null;
+        }
+
+        _ = c.mysql_query(conn.?, "select id, name, author from song");
+        const res: *c.MYSQL_RES = c.mysql_store_result(conn.?);
+
+        var list = std.ArrayList(song_meta).init(allocator.?);
+        var row: c.MYSQL_ROW = c.mysql_fetch_row(res);
+        while (row != null) {
+            const s = song_meta{
+                .id = std.mem.span(row[0]),
+                .name = std.mem.span(row[1]),
+                .author = std.mem.span(row[2]),
+            };
+            try list.append(s);
+            row = c.mysql_fetch_row(res);
+        }
+        return try list.toOwnedSlice();
+    }
+
+    pub fn create_tree(t: tree) !void {
+        if (conn == null) {
+            log(@src(), .{ "Attempting to query on a null connection", .err });
+            return;
+        }
+
+        const query: [*c]u8 = @ptrCast(c.malloc(100));
+
+        _ = c.sprintf(query, "insert into tree(name, points) values(%s, %s))", t.name.ptr, t.points.ptr);
+        if (c.mysql_query(conn.?, query) != 0) {
+            log(@src(), .{ "Could not insert tree into db", .err });
+        }
+        log(@src(), .{ "Succesfully created tree", .info });
+    }
+
     pub fn get_all_trees() !?[]tree {
         if (conn == null) {
             log(@src(), .{ "Attempting to query on a null connection", .err });
@@ -132,6 +172,30 @@ pub const database = struct {
                 .id = std.fmt.parseInt(i32, std.mem.span(row[0]), 10) catch -1,
                 .name = std.mem.span(row[1]),
                 .points = std.mem.span(row[2]),
+            };
+            try list.append(s);
+            row = c.mysql_fetch_row(res);
+        }
+        return try list.toOwnedSlice();
+    }
+
+    const tree_meta = struct { id: []const u8, name: []const u8 };
+
+    pub fn get_all_trees_names() !?[]tree_meta {
+        if (conn == null) {
+            log(@src(), .{ "Attempting to query on a null connection", .err });
+            return null;
+        }
+        _ = c.mysql_query(conn.?, "select id, name from tree");
+        const res: *c.MYSQL_RES = c.mysql_store_result(conn.?);
+
+        var list = std.ArrayList(tree_meta).init(allocator.?);
+
+        var row: c.MYSQL_ROW = c.mysql_fetch_row(res);
+        while (row != null) {
+            const s = tree_meta{
+                .id = std.mem.span(row[0]),
+                .name = std.mem.span(row[1]),
             };
             try list.append(s);
             row = c.mysql_fetch_row(res);

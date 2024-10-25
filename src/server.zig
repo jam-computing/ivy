@@ -75,9 +75,17 @@ pub const server = struct {
                     handle_song_request(r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error", .id = null });
                 }
             } else if (std.mem.eql(u8, endpoints.items[0], "beat")) {
-                handle_beat_request(r, &endpoints);
+                if (endpoints.items.len > 1) {
+                    handle_beat_request(r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error" });
+                } else {
+                    r.sendBody("Please hit api/beat/play with json") catch |e| {
+                        log(@src(), .{ "could not reply to beat play request", .err });
+                        r.sendError(e, null, 505);
+                        return;
+                    };
+                }
             } else if (std.mem.eql(u8, endpoints.items[0], "config")) {
-                handle_config_request(r, &endpoints);
+                handle_config_request(r);
             }
         }
 
@@ -104,7 +112,25 @@ pub const server = struct {
                 };
             }
         } else if (std.mem.eql(u8, args.task, "get")) {
-            const trees = db.get_all_trees() catch {
+            const trees = db.get_all_trees() catch |e| {
+                log(@src(), .{ "Could not get all trees", .debug });
+                r.sendError(e, null, 505);
+                return;
+            };
+            if (trees) |t| blk: {
+                var string = std.ArrayList(u8).init(alloc.?);
+                std.json.stringify(t, .{}, string.writer()) catch {
+                    log(@src(), .{ "Could not properly stringify data", .err });
+                    break :blk;
+                };
+                r.sendJson(string.items) catch {
+                    log(@src(), .{ "Could not respond to request", .err });
+                };
+            }
+        } else if (std.mem.eql(u8, args.task, "meta")) {
+            const trees = db.get_all_trees_names() catch |e| {
+                log(@src(), .{ "Could not get all trees", .debug });
+                r.sendError(e, null, 505);
                 return;
             };
             if (trees) |t| blk: {
@@ -139,8 +165,9 @@ pub const server = struct {
                     return;
                 };
 
-                r.sendJson(string.items) catch {
+                r.sendJson(string.items) catch |e| {
                     log(@src(), .{ "Could not respond to request", .err });
+                    r.sendError(e, null, 505);
                 };
                 return;
             }
@@ -148,6 +175,9 @@ pub const server = struct {
             log(@src(), .{ "Getting all songs", .info });
 
             const songs = db.get_all_songs() catch {
+                r.sendBody("could not get all songs") catch |e| {
+                    r.sendError(e, null, 505);
+                };
                 return;
             };
 
@@ -162,22 +192,74 @@ pub const server = struct {
                 r.sendError(e, null, 505);
                 return;
             };
-            r.sendJson(string.items) catch {
+            r.sendJson(string.items) catch |e| {
                 log(@src(), .{ "Could not respond to request", .err });
+                r.sendError(e, null, 505);
+                return;
+            };
+        } else if (std.mem.eql(u8, args.task, "play")) {
+
+        } else if (std.mem.eql(u8, args.task, "meta")) {
+            const songs = db.get_all_songs_names() catch {
+                r.sendBody("could not get all songs") catch |e| {
+                    log(@src(), .{ "Could not get metadata of all songs", .err });
+                    r.sendError(e, null, 505);
+                };
+                return;
+            };
+
+            if (songs == null) {
+                log(@src(), .{ "Could not get metadata of all songs", .err });
+                return;
+            }
+
+            var string = std.ArrayList(u8).init(alloc.?);
+
+            std.json.stringify(songs.?, .{}, string.writer()) catch |e| {
+                log(@src(), .{ "Could not properly stringify data", .err });
+                r.sendError(e, null, 505);
+                return;
+            };
+            r.sendJson(string.items) catch |e| {
+                log(@src(), .{ "Could not respond to request", .err });
+                r.sendError(e, null, 505);
                 return;
             };
         }
     }
-    fn handle_beat_request(r: zap.Request, _: *const std.ArrayList([]const u8)) void {
+    fn handle_beat_request(r: zap.Request, args: struct { task: []const u8 }) void {
         // play
-        r.sendBody("Beat endpoint") catch {
-            log(@src(), .{ "Could not respond to request", .fatal });
-        };
+        if (!std.mem.eql(u8, args.task, "play")) {
+            r.sendBody("Please hit api/beat/play instead of invalid endpoint") catch |e| {
+                log(@src(), .{ "Could not respond to request", .fatal });
+                r.sendError(e, null, 505);
+            };
+        }
+
+        if (r.body) |body| {
+            const t: std.json.Parsed(tree) = std.json.parseFromSlice(tree, alloc.?, body, .{}) catch |e| {
+                log(@src(), .{ "Could not parse json, invalid json", .err });
+                r.sendError(e, null, 505);
+                return;
+            };
+
+            db.create_tree(t.value) catch |e| {
+                log(@src(), .{ "Could not create tree", .err });
+                r.sendError(e, null, 505);
+                return;
+            };
+        } else {
+            r.sendBody("Please send json") catch |e| {
+                log(@src(), .{ "No json parsed", .err });
+                r.sendError(e, null, 505);
+            };
+        }
     }
-    fn handle_config_request(r: zap.Request, _: *const std.ArrayList([]const u8)) void {
+    fn handle_config_request(r: zap.Request) void {
         // none
-        r.sendBody("Config endpoint") catch {
+        r.sendBody("Config endpoint") catch |e| {
             log(@src(), .{ "Could not respond to request", .fatal });
+            r.sendError(e, null, 505);
         };
     }
 };

@@ -14,5 +14,4 @@ create table tree (
     id int unsigned primary key auto_increment,
     name varchar(255) unique,
     points JSON,
-    normalised_points JSON
 );

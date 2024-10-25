@@ -6,7 +6,8 @@ Zig backend for tree
 
 </div>
 
-https://cookbook.ziglang.cc/14-03-mysql.html
+> [!WARNING]
+> Ivy is still currently in development
 
 ## Running
 
@@ -14,27 +15,23 @@ https://cookbook.ziglang.cc/14-03-mysql.html
 zig build -Doptimize=ReleaseFast
 ```
 
-## Storing songs
-
-Each song is a list of "beats".
-
-Each beat is just a lot of bytes.
-Each set of 4 bytes map to a rgba value.
-
 ## User requirements
 
-### Holly
-- Create Tree
-- Create Beat
-- Get songs -           GET api/song/get            JSON
-- Play song -           GET api/song/play           JSON
-- Send beat -           POST api/beat/play
-- Send tree -           POST api/tree/create
-- Send song -           POST api/song/create
-- Receive Config File   GET api/config
-- Send Config File      POST api/config
-
 ### Ivy
+- Create Beat
+- Get songs             GET api/song/get            JSON
+- Play song             GET api/song/play           JSON
+- Get songs meta        GET api/song/meta           JSON
+- Create song           POST api/song/create        JSON
+- Create beat           POST api/beat/play          JSON
+- Create tree           POST api/tree/create        JSON
+- Get trees             GET api/tree/get            JSON
+- Get tree metadata     GET api/tree/meta           JSON
+- Receive Config File   GET api/config              JSON
+- Send Config File      POST api/config             JSON
+
+
+### Holly
 - Store songs and tree
 - WebAPI
 - Play selected song on lights
@@ -62,7 +59,6 @@ Each set of 4 bytes map to a rgba value.
     "name": "string",
     "points":
         [ { "x": "int", "y": "int", "z": "int" } ]
-
 }
 ```
 
