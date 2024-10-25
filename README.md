@@ -7,7 +7,8 @@ Zig backend for tree
 </div>
 
 > [!WARNING]
-> Ivy is still currently in development
+> Ivy is still currently in active development
+> Some features may not work properly
 
 ## Running
 
