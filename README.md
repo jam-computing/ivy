@@ -6,6 +6,8 @@ Zig backend for tree
 
 </div>
 
+https://cookbook.ziglang.cc/14-03-mysql.html
+
 ## Running
 
 ```sh

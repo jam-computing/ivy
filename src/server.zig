@@ -70,7 +70,7 @@ pub const server = struct {
                 handle_tree_request(&r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error" });
             } else if (std.mem.eql(u8, endpoints.items[0], "song")) {
                 if (endpoints.items.len > 2) {
-                    handle_song_request(r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error", .id = alloc.?.dupe(u8, endpoints.items[2]) catch "-1"});
+                    handle_song_request(r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error", .id = alloc.?.dupe(u8, endpoints.items[2]) catch "-1" });
                 } else {
                     handle_song_request(r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error", .id = null });
                 }
@@ -113,7 +113,7 @@ pub const server = struct {
                     log(@src(), .{ "Could not properly stringify data", .err });
                     break :blk;
                 };
-                r.sendBody(string.items) catch {
+                r.sendJson(string.items) catch {
                     log(@src(), .{ "Could not respond to request", .err });
                 };
             }
@@ -124,7 +124,24 @@ pub const server = struct {
     fn handle_song_request(r: zap.Request, args: struct { task: []const u8, id: ?[]const u8 }) void {
         // get, play
         if (std.mem.eql(u8, args.task, "get")) {
-            if (args.id) |_| {
+            if (args.id) |id| {
+                const s = db.get_song(std.fmt.parseInt(i32, id, 10) catch -1) catch return;
+
+                if (s == null) {
+                    return;
+                }
+
+                var string = std.ArrayList(u8).init(alloc.?);
+
+                std.json.stringify(s.?, .{}, string.writer()) catch |e| {
+                    log(@src(), .{ "Could not properly stringify data", .err });
+                    r.sendError(e, null, 505);
+                    return;
+                };
+
+                r.sendJson(string.items) catch {
+                    log(@src(), .{ "Could not respond to request", .err });
+                };
                 return;
             }
 
@@ -145,7 +162,7 @@ pub const server = struct {
                 r.sendError(e, null, 505);
                 return;
             };
-            r.sendBody(string.items) catch {
+            r.sendJson(string.items) catch {
                 log(@src(), .{ "Could not respond to request", .err });
                 return;
             };

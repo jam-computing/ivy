@@ -46,6 +46,50 @@ pub const database = struct {
         c.mysql_close(conn.?);
     }
 
+    pub fn get_song(id: i32) !?song {
+        if (conn == null) {
+            log(@src(), .{ "Attempting to query on a null connection", .err });
+            return null;
+        }
+
+        var buf: [52]u8 = undefined;
+        const query: []const u8 = try std.fmt.bufPrint(&buf, "select * from song where id = {}", .{id});
+
+        var i: usize = 0;
+
+        while(i < query.len) : (i += 1) {
+            std.debug.print("{c} ", .{query[i]});
+        }
+
+        std.debug.print("\n", .{});
+
+        log(@src(), .{ query, .debug });
+
+        _ = c.mysql_query(conn.?, "select * from song where id = 1");
+
+        const res: *c.MYSQL_RES = c.mysql_store_result(conn.?);
+        const row: c.MYSQL_ROW = c.mysql_fetch_row(res);
+        if (row == null) {
+            log(@src(), .{ "could not find result", .info });
+            return null;
+        }
+
+        const beats = std.json.parseFromSlice([][][]const u8, allocator.?, std.mem.span(row[4]), .{}) catch {
+            log(@src(), .{ "Could not parse beats from json", .err });
+            return null;
+        };
+
+        const s = song{
+            .id = std.fmt.parseInt(i32, std.mem.span(row[0]), 10) catch -1,
+            .name = std.mem.span(row[1]),
+            .author = std.mem.span(row[2]),
+            .beat_count = std.fmt.parseInt(i32, std.mem.span(row[3]), 10) catch -1,
+            .beats = beats.value,
+        };
+
+        return s;
+    }
+
     pub fn get_all_songs() !?[]song {
         if (conn == null) {
             log(@src(), .{ "Attempting to query on a null connection", .err });

@@ -42,7 +42,7 @@ pub const song = struct {
             .name = "",
             .author = "",
             .beat_count = 0,
-            .beats = &[_][]rgb{},
+            .beats = &[_][][]const u8{},
         };
     }
 
