@@ -7,6 +7,8 @@ const tree = @import("tree.zig").tree;
 
 const c = @cImport({
     @cInclude("mysql/mysql.h");
+    @cInclude("stdlib.h");
+    @cInclude("stdio.h");
 });
 
 var conn: ?*c.MYSQL = undefined;
@@ -52,20 +54,13 @@ pub const database = struct {
             return null;
         }
 
-        var buf: [52]u8 = undefined;
-        const query: []const u8 = try std.fmt.bufPrint(&buf, "select * from song where id = {}", .{id});
+        const query: [*c]u8 = @ptrCast(c.malloc(100));
 
-        var i: usize = 0;
+        _ = c.sprintf(query, "select * from song where id = %d", id);
 
-        while(i < query.len) : (i += 1) {
-            std.debug.print("{c} ", .{query[i]});
-        }
+        std.debug.print("{s}\n", .{query});
 
-        std.debug.print("\n", .{});
-
-        log(@src(), .{ query, .debug });
-
-        _ = c.mysql_query(conn.?, "select * from song where id = 1");
+        _ = c.mysql_query(conn.?, query);
 
         const res: *c.MYSQL_RES = c.mysql_store_result(conn.?);
         const row: c.MYSQL_ROW = c.mysql_fetch_row(res);

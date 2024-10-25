@@ -10,5 +10,5 @@ insert into tree (name, points) values (
 );
 
 insert into song(name, author, beat_count, beats) values (
-    "green", "gracey", 2, '[ [ "00ff00ff" ], [ "0000ffff ] ]'
+    "green", "gracey", 2, '[ [ "00ff00ff" ], [ "0000ffff" ] ]'
 );
