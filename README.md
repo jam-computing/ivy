@@ -18,8 +18,7 @@ Zig backend for tree
 ## Build and run
 
 ```sh
-zig build -Doptimize=ReleaseFast
-./zig-out/bin/ivy
+zig build -Doptimize=ReleaseFast && ./zig-out/bin/ivy
 ```
 
 ## User requirements
@@ -36,6 +35,8 @@ zig build -Doptimize=ReleaseFast
 - [ ] Receive Config File  GET api/config              JSON <br>
 - [ ] Send Config File     POST api/config             JSON <br>
 
+- [ ] Make sure all mem is freed
+
 ### Holly
 - [ ] Store songs and tree <br>
 - [ ] WebAPI <br>
@@ -50,10 +51,19 @@ zig build -Doptimize=ReleaseFast
     "id": "int",
     "name": "string",
     "author": "string",
-    "beat_count": "int",
     "beats": [
         [ "rgba": "string" ]
     ]
+}
+```
+
+#### Song Creation Request Example
+```json
+
+{
+    "name": "string",
+    "author": "string",
+    "beats": [ [ "rgba": "string" ] ]
 }
 ```
 
@@ -62,8 +72,7 @@ zig build -Doptimize=ReleaseFast
 {
     "id": "int",
     "name": "string",
-    "points":
-        [ { "x": "int", "y": "int", "z": "int" } ]
+    "points": [ { "x": "int", "y": "int", "z": "int" } ]
 }
 ```
 

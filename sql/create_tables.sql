@@ -4,7 +4,6 @@ create table song (
     id int unsigned primary key auto_increment,
     name varchar(255),
     author varchar(255),
-    beat_count int unsigned,
     beats JSON
 );
 

@@ -11,6 +11,14 @@ var CONTROLLER: controller = undefined;
 
 var alloc: ?std.mem.Allocator = null;
 
+const creation_response = struct { success: bool };
+
+pub const creation_song_request = struct {
+    name: []const u8,
+    author: []const u8,
+    beats: [][][]const u8,
+};
+
 pub const server = struct {
     port: u32,
 
@@ -197,9 +205,7 @@ pub const server = struct {
                 r.sendError(e, null, 505);
                 return;
             };
-        } else if (std.mem.eql(u8, args.task, "play")) {
-
-        } else if (std.mem.eql(u8, args.task, "meta")) {
+        } else if (std.mem.eql(u8, args.task, "play")) {} else if (std.mem.eql(u8, args.task, "meta")) {
             const songs = db.get_all_songs_names() catch {
                 r.sendBody("could not get all songs") catch |e| {
                     log(@src(), .{ "Could not get metadata of all songs", .err });
@@ -225,6 +231,54 @@ pub const server = struct {
                 r.sendError(e, null, 505);
                 return;
             };
+        } else if (std.mem.eql(u8, args.task, "create")) {
+            var response = creation_response{ .success = true };
+            if (r.body) |body| {
+                log(@src(), .{ body, .info });
+                const parsed = std.json.parseFromSlice(creation_song_request, alloc.?, body, .{}) catch {
+                    log(@src(), .{ "Could not create json. Please check valid json passed", .err });
+                    log(@src(), .{ body, .info });
+                    response.success = false;
+                    var response_list = std.ArrayList(u8).init(alloc.?);
+                    _ = std.json.stringify(response, .{}, response_list.writer()) catch |e| {
+                        log(@src(), .{ "Could not create response json", .err });
+                        r.sendError(e, null, 505);
+                    };
+                    r.sendJson(response_list.toOwnedSlice() catch "") catch |e| {
+                        log(@src(), .{ "Could not respond to request", .err });
+                        r.sendError(e, null, 505);
+                    };
+                    return;
+                };
+
+                log(@src(), .{ "Parsed data name:", parsed.value.name, .debug });
+
+                db.create_song(parsed.value) catch {
+                    log(@src(), .{ "could not add to database.", .err });
+                    response.success = false;
+                    var response_list = std.ArrayList(u8).init(alloc.?);
+                    _ = std.json.stringify(response, .{}, response_list.writer()) catch |e| {
+                        log(@src(), .{ "Could not create response json", .err });
+                        r.sendError(e, null, 505);
+                    };
+                    r.sendJson(response_list.toOwnedSlice() catch "") catch |e| {
+                        log(@src(), .{ "Could not respond to request", .err });
+                        r.sendError(e, null, 505);
+                    };
+                    return;
+                };
+
+                var response_list = std.ArrayList(u8).init(alloc.?);
+                _ = std.json.stringify(response, .{}, response_list.writer()) catch |e| {
+                    log(@src(), .{ "Could not create response json", .err });
+                    r.sendError(e, null, 505);
+                };
+
+                r.sendJson(response_list.toOwnedSlice() catch "") catch |e| {
+                    log(@src(), .{ "Could not respond to request", .err });
+                    r.sendError(e, null, 505);
+                };
+            }
         }
     }
     fn handle_beat_request(r: zap.Request, args: struct { task: []const u8 }) void {
