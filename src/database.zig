@@ -104,6 +104,7 @@ pub const database = struct {
         var row: c.MYSQL_ROW = c.mysql_fetch_row(res);
 
         while (row != null) {
+            std.debug.print("json: {s}", .{std.mem.span(row[3])});
             const beats = std.json.parseFromSlice([][][]const u8, allocator.?, std.mem.span(row[3]), .{}) catch {
                 log(@src(), .{ "Could not parse beats from json", .err });
                 return null;

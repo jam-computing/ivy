@@ -19,6 +19,8 @@ pub const creation_song_request = struct {
     beats: [][][]const u8,
 };
 
+pub const play_song_request = struct { id: i32 };
+
 pub const server = struct {
     port: u32,
 
@@ -205,7 +207,43 @@ pub const server = struct {
                 r.sendError(e, null, 505);
                 return;
             };
-        } else if (std.mem.eql(u8, args.task, "play")) {} else if (std.mem.eql(u8, args.task, "meta")) {
+        } else if (std.mem.eql(u8, args.task, "play")) {
+            // expected input
+            if (r.body) |body| {
+                const parsed = std.json.parseFromSlice(play_song_request, alloc.?, body, .{}) catch |e| {
+                    log(@src(), .{ "Could not create json. Please check valid json passed", .err });
+                    log(@src(), .{ body, .info });
+                    r.sendError(e, null, 505);
+                    return;
+                };
+
+                log(@src(), .{ "id:", parsed.value.id, .info });
+                const s = db.get_song(parsed.value.id) catch {
+                    log(@src(), .{ "could not get song from db.", .err });
+                    r.sendJson("{ \"success\": false") catch |e| {
+                        log(@src(), .{ "could not send json", .err });
+                        r.sendError(e, null, 505);
+                    };
+                    return;
+                };
+
+                if (s) |_song| {
+                    CONTROLLER.play(&_song);
+                    log(@src(), .{ "playing song", .err });
+                } else {
+                    log(@src(), .{ "not playing song", .err });
+                    r.sendJson("{ \"success\": false") catch |e| {
+                        log(@src(), .{ "could not send json", .err });
+                        r.sendError(e, null, 505);
+                    };
+                }
+
+                r.sendJson("{ \"success\": true") catch |e| {
+                    log(@src(), .{ "could not send json", .err });
+                    r.sendError(e, null, 505);
+                };
+            }
+        } else if (std.mem.eql(u8, args.task, "meta")) {
             const songs = db.get_all_songs_names() catch {
                 r.sendBody("could not get all songs") catch |e| {
                     log(@src(), .{ "Could not get metadata of all songs", .err });

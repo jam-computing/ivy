@@ -5,7 +5,7 @@ const rgb = @import("song.zig").rgb;
 
 pub fn main() !void {
     try sd.sd_init_log(sd.sd_log_level.info, null);
-    const s = server{ .port = 3000 };
+    const s = server{ .port = 8080 };
     sd.sdlog(@src(), .{ "Running on port", s.port, .info });
     try s.run();
 }

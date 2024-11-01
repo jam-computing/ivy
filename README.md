@@ -67,6 +67,13 @@ zig build -Doptimize=ReleaseFast && ./zig-out/bin/ivy
 }
 ```
 
+#### Song Play Request Example
+```json
+{
+    "id": "int"
+}
+```
+
 #### Tree Json Example
 ```json
 {

@@ -1,3 +1,5 @@
+drop song;
+drop tree;
 -- Song should have name and author
 -- Should also have a list of list of rgb values
 create table song (
