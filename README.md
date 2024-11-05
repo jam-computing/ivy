@@ -27,7 +27,7 @@ zig build -Doptimize=ReleaseFast && ./zig-out/bin/ivy
 - [x] Get songs           GET api/song/get            JSON <br>
 - [ ] Play song            GET api/song/play           JSON <br>
 - [x] Get songs meta      GET api/song/meta           JSON <br>
-- [ ] Create song          POST api/song/create        JSON <br>
+- [x] Create song          POST api/song/create        JSON <br>
 - [ ] Play beat            POST api/beat/play          JSON <br>
 - [x] Create tree          POST api/tree/create        JSON <br>
 - [x] Get trees           GET api/tree/get            JSON <br>

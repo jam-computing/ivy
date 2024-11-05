@@ -238,12 +238,12 @@ pub const server = struct {
                     };
                 }
 
-                r.sendJson("{ \"success\": true") catch |e| {
+                r.sendJson(" \"success\": true") catch |e| {
                     log(@src(), .{ "could not send json", .err });
                     r.sendError(e, null, 505);
                 };
             }
-        } else if (std.mem.eql(u8, args.task, "meta")) {
+        }  else if (std.mem.eql(u8, args.task, "meta")) {
             const songs = db.get_all_songs_names() catch {
                 r.sendBody("could not get all songs") catch |e| {
                     log(@src(), .{ "Could not get metadata of all songs", .err });
