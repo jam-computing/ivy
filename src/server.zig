@@ -7,6 +7,9 @@ const log = @import("stardust").sdlog;
 const db = @import("database.zig").database;
 const tree = @import("tree.zig").tree;
 
+const c = @cImport({
+    @cInclude("unistd.h");
+});
 
 var alloc: ?std.mem.Allocator = null;
 
@@ -43,7 +46,7 @@ pub const server = struct {
             .on_request = on_request,
         });
 
-        // try controller.init(&alloc.?);
+        try controller.init(&alloc.?);
 
         log(@src(), .{ "Listening for incoming connections...", .info });
 
@@ -59,7 +62,9 @@ pub const server = struct {
         try pool.init(.{ .allocator = alloc.? });
         defer pool.deinit();
 
-        try pool.spawn(controller.start_loop, .{});
+        try pool.spawn(controller.start_loop, .{
+            c.getpid()
+        });
 
         zap.start(.{
             .threads = 2,

@@ -1,8 +1,10 @@
 const std = @import("std");
 const song = @import("song.zig").song;
+const log = @import("stardust").sdlog;
 
 const c = @cImport({
     @cInclude("rpi_ws281x/ws2811.h");
+    @cInclude("signal.h");
 });
 
 pub const controller_init_error = error{
@@ -17,6 +19,7 @@ pub const controller_render_error = error{
 const play_type = union(enum) {
     song: [][][]const u8,
     beat: [][]const u8,
+    none,
 };
 
 const state = struct {
@@ -29,8 +32,8 @@ pub const controller_state = struct {
     mutex: std.Thread.Mutex,
 
     pub fn init(allocator: *std.mem.Allocator) !*controller_state {
-        return allocator.create(controller_state) catch |err| {
-            return err;
+        return allocator.create(controller_state) catch |e| {
+            return e;
         };
     }
 
@@ -52,6 +55,19 @@ pub const controller_state = struct {
         self.state.play_type = newPlayType;
         self.mutex.unlock();
     }
+
+    pub fn getAlive(self: *controller_state) bool {
+        self.mutex.lock();
+        const result = self.state.alive;
+        self.mutex.unlock();
+        return result;
+    }
+
+    pub fn setAlive(self: *controller_state, live: bool) void {
+        self.mutex.lock();
+        self.state.alive = live;
+        self.mutex.unlock();
+    }
 };
 
 pub var GLOBAL_CONTROLLER_STATE: *controller_state = undefined;
@@ -61,7 +77,6 @@ const LED_COUNT = 50;
 var WS281X: c.ws2811_t = undefined;
 
 pub fn init(alloc: *std.mem.Allocator) !void {
-
     GLOBAL_CONTROLLER_STATE = try controller_state.init(alloc);
 
     WS281X.freq = c.WS2811_TARGET_FREQ;
@@ -87,7 +102,16 @@ pub fn init(alloc: *std.mem.Allocator) !void {
     }
 }
 
-pub fn start_loop() void {}
+pub fn start_loop(pid: i32) void {
+    while (true) {
+        log(@src(), .{ "One Second", .debug });
+        std.time.sleep(1 * std.time.ns_per_s);
+        if (c.kill(pid, 0) == 1) {
+            log(@src(), .{ "Main thread stopped, stopping", .debug });
+            return;
+        }
+    }
+}
 
 fn play(_: *const song) void {
     // loop through and play frames
