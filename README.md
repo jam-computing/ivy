@@ -37,6 +37,11 @@ zig build -Doptimize=ReleaseFast && ./zig-out/bin/ivy
 
 - [ ] Make sure all mem is freed
 
+- [ ] Currently Playing     GET api/current             JSON <br>
+- [ ] Play                  GET api/play                JSON <br>
+- [ ] Pause                 GET api/pause               JSON <br>
+
+
 ### Holly
 - [ ] Store songs and tree <br>
 - [ ] WebAPI <br>

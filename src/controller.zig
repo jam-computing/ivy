@@ -5,45 +5,94 @@ const c = @cImport({
     @cInclude("rpi_ws281x/ws2811.h");
 });
 
-pub const controller_init_error = error {
+pub const controller_init_error = error{
     COULD_NOT_INIT,
     COULD_NOT_RENDER,
 };
 
-const LED_COUNT = 50;
+pub const controller_render_error = error{
+    COULD_NOT_RENDER,
+};
 
-pub const controller = struct {
-    ws281x: c.ws2811_t,
+const play_type = union(enum) {
+    song: [][][]const u8,
+    beat: [][]const u8,
+};
 
-    pub fn init() controller_init_error!controller {
-        var ledstring: c.ws2811_t = undefined;
+const state = struct {
+    play_type: play_type,
+    current_duration: u32,
+};
 
-        ledstring.freq = c.WS2811_TARGET_FREQ;
-        ledstring.dmanum = 10;
-        ledstring.channel[0].gpionum = 18;
-        ledstring.channel[0].count = 50;
-        ledstring.channel[0].invert = 0;
-        ledstring.channel[0].brightness = 255;
-        ledstring.channel[0].strip_type = c.WS2811_STRIP_RGB;
+pub const controller_state = struct {
+    state: state,
+    mutex: std.Thread.Mutex,
 
-        if(c.ws2811_init(&ledstring) != c.WS2811_SUCCESS) {
-            std.debug.print("Error initialising ws2811\n", .{});
-            return controller_init_error.COULD_NOT_INIT;
-        }
-
-        ledstring.channel[0].leds[0] = 0xFF0000;
-        ledstring.channel[0].leds[1] = 0x00FF00;
-        ledstring.channel[0].leds[2] = 0x0000FF;
-
-        if(c.ws2811_render(&ledstring) != c.WS2811_SUCCESS) {
-            std.debug.print("Could not render", .{});
-            return controller_init_error.COULD_NOT_RENDER;
-        }
-
-        return controller { .ws281x = ledstring };
+    pub fn init(allocator: *std.mem.Allocator) !*controller_state {
+        return allocator.create(controller_state) catch |err| {
+            return err;
+        };
     }
 
-    pub fn play(_: *controller, _: *const song) void {
+    pub fn deinit(self: *controller_state, allocator: *std.mem.Allocator) void {
+        allocator.destroy(self);
+    }
 
+    // Thread-safe getter function
+    pub fn getPlayType(self: *controller_state) play_type {
+        self.mutex.lock();
+        const result = self.state.play_type;
+        self.mutex.unlock();
+        return result;
+    }
+
+    // Thread-safe setter function
+    pub fn setPlayType(self: *controller_state, newPlayType: play_type) void {
+        self.mutex.lock();
+        self.state.play_type = newPlayType;
+        self.mutex.unlock();
     }
 };
+
+pub var GLOBAL_CONTROLLER_STATE: *controller_state = undefined;
+
+const LED_COUNT = 50;
+
+var WS281X: c.ws2811_t = undefined;
+
+pub fn init(alloc: *std.mem.Allocator) !void {
+
+    GLOBAL_CONTROLLER_STATE = try controller_state.init(alloc);
+
+    WS281X.freq = c.WS2811_TARGET_FREQ;
+    WS281X.dmanum = 10;
+    WS281X.channel[0].gpionum = 18;
+    WS281X.channel[0].count = 50;
+    WS281X.channel[0].invert = 0;
+    WS281X.channel[0].brightness = 255;
+    WS281X.channel[0].strip_type = c.WS2811_STRIP_RGB;
+
+    if (c.ws2811_init(&WS281X) != c.WS2811_SUCCESS) {
+        std.debug.print("Error initialising ws2811\n", .{});
+        return controller_init_error.COULD_NOT_INIT;
+    }
+
+    WS281X.channel[0].leds[0] = 0xFF0000;
+    WS281X.channel[0].leds[1] = 0x00FF00;
+    WS281X.channel[0].leds[2] = 0x0000FF;
+
+    if (c.ws2811_render(&WS281X) != c.WS2811_SUCCESS) {
+        std.debug.print("Could not render", .{});
+        return controller_init_error.COULD_NOT_RENDER;
+    }
+}
+
+pub fn start_loop() void {}
+
+fn play(_: *const song) void {
+    // loop through and play frames
+}
+
+fn play_beat(_: *const [][]const u8) void {
+    _ = WS281X.channel[0];
+}

@@ -1,22 +1,26 @@
 const std = @import("std");
 const zap = @import("zap");
-const controller = @import("controller.zig").controller;
+const controller = @import("controller.zig");
 const init_error = @import("controller.zig").controller_init_error;
 const song = @import("song.zig").song;
 const log = @import("stardust").sdlog;
 const db = @import("database.zig").database;
 const tree = @import("tree.zig").tree;
 
-var CONTROLLER: controller = undefined;
 
 var alloc: ?std.mem.Allocator = null;
 
-const creation_response = struct { success: bool };
+const success_response = struct { success: bool };
 
 pub const creation_song_request = struct {
     name: []const u8,
     author: []const u8,
     beats: [][][]const u8,
+};
+
+pub const currently_playing_request = struct {
+    song_id: i32,
+    time: i32,
 };
 
 pub const play_song_request = struct { id: i32 };
@@ -26,14 +30,20 @@ pub const server = struct {
 
     pub fn run(self: *const server) !void {
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+        defer _ = gpa.deinit();
         alloc = gpa.allocator();
+
+        if(alloc == null) {
+            log(@src(), .{ "Could not create gpa, weird..", .fatal });
+            return;
+        }
 
         var listener = zap.HttpListener.init(.{
             .port = self.port,
             .on_request = on_request,
         });
 
-        // CONTROLLER = try controller.init();
+        // try controller.init(&alloc.?);
 
         log(@src(), .{ "Listening for incoming connections...", .info });
 
@@ -44,6 +54,12 @@ pub const server = struct {
         db.init(alloc.?);
 
         log(@src(), .{ "Initiated database", .info });
+
+        var pool: std.Thread.Pool = undefined;
+        try pool.init(.{ .allocator = alloc.? });
+        defer pool.deinit();
+
+        try pool.spawn(controller.start_loop, .{});
 
         zap.start(.{
             .threads = 2,
@@ -76,7 +92,13 @@ pub const server = struct {
                 return;
             }
 
-            if (std.mem.eql(u8, endpoints.items[0], "tree")) {
+            if(std.mem.eql(u8, endpoints.items[0], "play")) {
+
+            } else if(std.mem.eql(u8, endpoints.items[0], "pause")) {
+
+            } else if(std.mem.eql(u8, endpoints.items[0], "pause")) {
+
+            }else if (std.mem.eql(u8, endpoints.items[0], "tree")) {
                 handle_tree_request(&r, .{ .task = alloc.?.dupe(u8, endpoints.items[1]) catch "error" });
             } else if (std.mem.eql(u8, endpoints.items[0], "song")) {
                 if (endpoints.items.len > 2) {
@@ -227,8 +249,8 @@ pub const server = struct {
                     return;
                 };
 
-                if (s) |_song| {
-                    CONTROLLER.play(&_song);
+                if (s) |_| {
+                    // Play song here
                     log(@src(), .{ "playing song", .err });
                 } else {
                     log(@src(), .{ "not playing song", .err });
@@ -270,7 +292,7 @@ pub const server = struct {
                 return;
             };
         } else if (std.mem.eql(u8, args.task, "create")) {
-            var response = creation_response{ .success = true };
+            var response = success_response{ .success = true };
             if (r.body) |body| {
                 log(@src(), .{ body, .info });
                 const parsed = std.json.parseFromSlice(creation_song_request, alloc.?, body, .{}) catch {
@@ -347,6 +369,12 @@ pub const server = struct {
             };
         }
     }
+
+    fn handle_play_request(_: zap.Request) void {
+
+    }
+
+
     fn handle_config_request(r: zap.Request) void {
         // none
         r.sendBody("Config endpoint") catch |e| {
